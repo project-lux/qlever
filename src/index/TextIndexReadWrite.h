@@ -32,7 +32,13 @@ void readFreqComprListHelper(size_t nofElements, off_t from, size_t nofBytes,
                              const ad_utility::File& textIndexFile,
                              vector<uint64_t>& frequencyEncodedVector,
                              std::vector<From>& codebook) {
-  AD_CONTRACT_CHECK(nofBytes > 0);
+  // Allow nofBytes to be 0 for empty data blocks
+  if (nofBytes == 0) {
+    // Return empty vectors for empty data
+    frequencyEncodedVector.clear();
+    codebook.clear();
+    return;
+  }
   LOG(DEBUG) << "Reading frequency-encoded list from disk...\n";
   LOG(TRACE) << "NofElements: " << nofElements << ", from: " << from
              << ", nofBytes: " << nofBytes << '\n';
@@ -84,6 +90,12 @@ void readGapComprListHelper(size_t nofElements, off_t from, size_t nofBytes,
   LOG(DEBUG) << "Reading gap-encoded list from disk...\n";
   LOG(TRACE) << "NofElements: " << nofElements << ", from: " << from
              << ", nofBytes: " << nofBytes << '\n';
+
+  // Handle empty data case
+  if (nofBytes == 0) {
+    gapEncodedVector.clear();
+    return;
+  }
 
   // Create vector that is simple8b and gap encoded, read encoded vector from
   // file
@@ -176,6 +188,10 @@ template <typename T>
 vector<T> readZstdComprList(size_t nofElements, off_t from,
                             size_t nofBytesCompressed,
                             const ad_utility::File& textIndexFile) {
+  // Handle empty compressed data case
+  if (nofBytesCompressed == 0) {
+    return vector<T>{};
+  }
   std::vector<char> compressed(nofBytesCompressed);
   size_t ret = textIndexFile.read(compressed.data(), nofBytesCompressed, from);
   AD_CONTRACT_CHECK(ret == nofBytesCompressed);
